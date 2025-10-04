@@ -102,6 +102,55 @@ Here's what the extracted data looks like:
 }
 ```
 
+## Example 6: Deploy to Azure
+
+After extracting your data, deploy it to Azure:
+
+```bash
+cd AzureSearchIndexToolbox
+dotnet run -- deploy "./output/search-index.json" "./output/media" "DefaultEndpointsProtocol=https;AccountName=mystorage;AccountKey=..." "https://my-search-service.search.windows.net" "ABC123XYZ456..."
+```
+
+**Interactive Session:**
+```
+=== Azure Search Index Toolbox ===
+
+Validating Azure connections...
+✓ Blob Storage connection successful
+✓ Azure Cognitive Search connection successful
+
+Enter the Azure Search Index name to create/update: my-documents-index
+
+=== Starting Azure Deployment ===
+
+Step 1: Loading documents from JSON...
+✓ Loaded 10 document(s)
+
+Step 2: Uploading media files to Azure Blob Storage...
+Found 25 unique media file(s) to upload
+  ✓ Uploaded: document1_image_1.png
+  ✓ Uploaded: document2_video_1.mp4
+  ...
+✓ Uploaded 25 media file(s)
+
+Step 3: Updating document references with Blob Storage URLs...
+✓ Document references updated
+
+Step 4: Creating/updating Azure Search Index...
+  Created new search index: my-documents-index
+✓ Search index 'my-documents-index' ready
+
+Step 5: Uploading documents to Azure Search Index...
+  ✓ Uploaded batch of 10 document(s)
+✓ Uploaded 10 document(s) to search index
+
+=== Deployment Complete ===
+Search Index: my-documents-index
+Blob Container: searchindex-media
+```
+
+See [DEPLOYMENT.md](../DEPLOYMENT.md) for detailed deployment instructions.
+
 ## Integration with Azure Cognitive Search
 
 Once you have the JSON output, you can upload it to Azure:
@@ -181,12 +230,16 @@ dotnet run -- extract <directory-path> [output-directory]
 # Merge index files
 dotnet run -- merge <file1> <file2> ... <output-file>
 
+# Deploy to Azure
+dotnet run -- deploy <json-path> <media-dir> <blob-conn> <search-endpoint> <search-key> [container-name]
+
 # Show help
 dotnet run -- help
 ```
 
 ## Next Steps
 
+- Deploy to Azure using the integrated deployment feature (see [DEPLOYMENT.md](../DEPLOYMENT.md))
 - Integrate with Azure Cognitive Search
 - Use with Azure.AI.OpenAI for semantic search
 - Build a web interface for the extracted data
