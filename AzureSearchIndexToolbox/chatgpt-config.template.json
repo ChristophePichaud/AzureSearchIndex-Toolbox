@@ -1,0 +1,13 @@
+{
+  "apiKey": "YOUR_AZURE_OPENAI_API_KEY",
+  "endpoint": "https://YOUR_RESOURCE_NAME.openai.azure.com/",
+  "deploymentName": "gpt-35-turbo",
+  "maxQuestionsCount": 10,
+  "systemContext": "Je suis un assistant français et je vais vous donner des informations sur les fichiers d'index personnalisés.",
+  "searchEndpoint": "https://YOUR_SEARCH_SERVICE.search.windows.net",
+  "searchApiKey": "YOUR_SEARCH_API_KEY",
+  "searchIndexName": "YOUR_INDEX_NAME",
+  "postgresConnectionString": "Host=localhost;Database=chatgpt_conversations;Username=postgres;Password=YOUR_PASSWORD",
+  "temperature": 0.7,
+  "maxTokens": 800
+}

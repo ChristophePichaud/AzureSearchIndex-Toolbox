@@ -11,6 +11,7 @@ A C# console application that extracts data from PowerPoint (PPTX), PDF, and Mar
 - **Batch Processing**: Process individual files or entire directories
 - **File Merging**: Merge multiple search index JSON files into a single file
 - **Azure Deployment**: Deploy search indexes and media files directly to Azure Cognitive Search and Azure Blob Storage
+- **ChatGPT Integration**: Interactive Q&A service using Azure OpenAI with Azure Search Index for context-aware responses (NEW!)
 
 ## Quick Start
 
@@ -43,6 +44,15 @@ dotnet run -- deploy ./output/search-index.json ./output/media "<blob-connection
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
+### Use ChatGPT with Your Indexed Data
+
+```bash
+# Ask questions about your indexed documents using ChatGPT
+dotnet run -- chatgpt ./chatgpt-config.json
+```
+
+See [CHATGPT_SERVICE.md](./CHATGPT_SERVICE.md) for complete ChatGPT integration documentation.
+
 ## Documentation
 
 See the [detailed documentation](./AzureSearchIndexToolbox/README.md) in the AzureSearchIndexToolbox folder for complete usage instructions, examples, and architecture details.
@@ -51,9 +61,9 @@ See the [detailed documentation](./AzureSearchIndexToolbox/README.md) in the Azu
 
 The solution follows a clean, modular architecture:
 
-- **Models**: Data structures for search index documents
+- **Models**: Data structures for search index documents and ChatGPT configuration
 - **Extractors**: Specialized extractors for each file type (PPTX, PDF, MD)
-- **Services**: Azure Search Index service for JSON serialization
+- **Services**: Azure Search Index service, Azure Deployment service, and ChatGPT service
 - **Program**: Main orchestration and CLI interface
 
 Every component is fully commented to help users understand how it works.
@@ -68,6 +78,10 @@ Every component is fully commented to help users understand how it works.
   - Newtonsoft.Json
   - Azure.Search.Documents (for deployment)
   - Azure.Storage.Blobs (for deployment)
+  - Azure.AI.OpenAI (for ChatGPT integration)
+  - Microsoft.EntityFrameworkCore (for conversation storage)
+  - Npgsql.EntityFrameworkCore.PostgreSQL (for PostgreSQL)
+- PostgreSQL (optional, for ChatGPT conversation history)
 
 ## Output Format
 

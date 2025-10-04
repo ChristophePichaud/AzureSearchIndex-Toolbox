@@ -64,6 +64,16 @@ namespace AzureSearchIndexToolbox
                         DeployToAzure(args[1], args[2], args[3], args[4], args[5], args.Length > 6 ? args[6] : "searchindex-media");
                         break;
 
+                    case "chatgpt":
+                        if (args.Length < 2)
+                        {
+                            Console.WriteLine("Error: Please provide a configuration file path.");
+                            ShowUsage();
+                            return;
+                        }
+                        RunChatGptInteractive(args[1]).GetAwaiter().GetResult();
+                        break;
+
                     case "help":
                     case "--help":
                     case "-h":
@@ -351,6 +361,266 @@ namespace AzureSearchIndexToolbox
         }
 
         /// <summary>
+        /// Runs an interactive ChatGPT session with Azure Search Index integration.
+        /// </summary>
+        /// <param name="configFilePath">Path to the ChatGPT configuration JSON file</param>
+        static async Task RunChatGptInteractive(string configFilePath)
+        {
+            Console.WriteLine("=== ChatGPT with Azure Search Index ===");
+            Console.WriteLine();
+
+            // Load configuration
+            if (!File.Exists(configFilePath))
+            {
+                Console.WriteLine($"Error: Configuration file not found: {configFilePath}");
+                Console.WriteLine("Please create a chatgpt-config.json file with your Azure OpenAI and Search credentials.");
+                return;
+            }
+
+            ChatGptConfiguration? config;
+            try
+            {
+                string configJson = File.ReadAllText(configFilePath);
+                config = Newtonsoft.Json.JsonConvert.DeserializeObject<ChatGptConfiguration>(configJson);
+                
+                if (config == null)
+                {
+                    Console.WriteLine("Error: Failed to parse configuration file.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading configuration: {ex.Message}");
+                return;
+            }
+
+            // Initialize ChatGPT service
+            ChatGptService? chatService = null;
+            try
+            {
+                chatService = new ChatGptService(config);
+                Console.WriteLine("✓ ChatGPT service initialized");
+                Console.WriteLine($"✓ Using model: {config.DeploymentName}");
+                Console.WriteLine($"✓ Connected to search index: {config.SearchIndexName}");
+                Console.WriteLine($"✓ Conversation ID: {chatService.GetCurrentConversationId()}");
+                Console.WriteLine();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing ChatGPT service: {ex.Message}");
+                return;
+            }
+
+            // Interactive loop
+            bool running = true;
+            while (running)
+            {
+                Console.WriteLine("\nCommands:");
+                Console.WriteLine("  ask - Ask a single question");
+                Console.WriteLine("  multi - Ask multiple questions");
+                Console.WriteLine("  new - Start a new conversation");
+                Console.WriteLine("  continue - Continue an existing conversation");
+                Console.WriteLine("  reset - Reset current conversation");
+                Console.WriteLine("  history - View conversation history");
+                Console.WriteLine("  exit - Exit the program");
+                Console.Write("\nEnter command: ");
+                
+                string? command = Console.ReadLine()?.ToLower().Trim();
+
+                try
+                {
+                    switch (command)
+                    {
+                        case "ask":
+                            await HandleAskQuestion(chatService);
+                            break;
+
+                        case "multi":
+                            await HandleMultipleQuestions(chatService);
+                            break;
+
+                        case "new":
+                            string newConvId = chatService.StartNewConversation();
+                            Console.WriteLine($"Started new conversation: {newConvId}");
+                            break;
+
+                        case "continue":
+                            await HandleContinueConversation(chatService);
+                            break;
+
+                        case "reset":
+                            chatService.ResetConversation();
+                            Console.WriteLine("Conversation reset.");
+                            break;
+
+                        case "history":
+                            await HandleViewHistory(chatService);
+                            break;
+
+                        case "exit":
+                            running = false;
+                            Console.WriteLine("Exiting...");
+                            break;
+
+                        default:
+                            Console.WriteLine("Unknown command. Please try again.");
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                }
+            }
+
+            chatService?.Dispose();
+        }
+
+        /// <summary>
+        /// Handles asking a single question.
+        /// </summary>
+        static async Task HandleAskQuestion(ChatGptService chatService)
+        {
+            Console.Write("\nEnter your question: ");
+            string? question = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(question))
+            {
+                Console.WriteLine("Question cannot be empty.");
+                return;
+            }
+
+            Console.WriteLine("\nProcessing...");
+            var response = await chatService.AskQuestionAsync(question);
+            
+            DisplayResponse(response);
+        }
+
+        /// <summary>
+        /// Handles asking multiple questions.
+        /// </summary>
+        static async Task HandleMultipleQuestions(ChatGptService chatService)
+        {
+            Console.WriteLine("\nEnter questions (one per line). Type 'done' when finished:");
+            
+            var questions = new List<string>();
+            while (true)
+            {
+                Console.Write($"Question {questions.Count + 1}: ");
+                string? question = Console.ReadLine();
+                
+                if (string.IsNullOrWhiteSpace(question) || question.ToLower() == "done")
+                {
+                    break;
+                }
+                
+                questions.Add(question);
+            }
+
+            if (questions.Count == 0)
+            {
+                Console.WriteLine("No questions entered.");
+                return;
+            }
+
+            Console.WriteLine("\nProcessing...");
+            var response = await chatService.AskQuestionsAsync(questions);
+            
+            DisplayResponse(response);
+        }
+
+        /// <summary>
+        /// Handles continuing an existing conversation.
+        /// </summary>
+        static async Task HandleContinueConversation(ChatGptService chatService)
+        {
+            Console.Write("\nEnter conversation ID: ");
+            string? conversationId = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(conversationId))
+            {
+                Console.WriteLine("Conversation ID cannot be empty.");
+                return;
+            }
+
+            await chatService.ContinueConversationAsync(conversationId);
+        }
+
+        /// <summary>
+        /// Handles viewing conversation history.
+        /// </summary>
+        static async Task HandleViewHistory(ChatGptService chatService)
+        {
+            var history = await chatService.GetConversationHistoryAsync();
+
+            if (history.Count == 0)
+            {
+                Console.WriteLine("\nNo conversation history found.");
+                return;
+            }
+
+            Console.WriteLine($"\n=== Conversation History ({history.Count} exchanges) ===\n");
+            
+            foreach (var entry in history)
+            {
+                Console.WriteLine($"[{entry.CreatedAt:yyyy-MM-dd HH:mm:ss}] Q{entry.SequenceNumber}:");
+                Console.WriteLine($"Q: {entry.Question}");
+                Console.WriteLine($"A: {entry.Answer}");
+                
+                if (!string.IsNullOrWhiteSpace(entry.Citations))
+                {
+                    var citations = Newtonsoft.Json.JsonConvert.DeserializeObject<List<DocumentCitation>>(entry.Citations);
+                    if (citations != null && citations.Count > 0)
+                    {
+                        Console.WriteLine($"   Sources: {citations.Count} document(s)");
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+
+        /// <summary>
+        /// Displays a ChatGPT response with formatting.
+        /// </summary>
+        static void DisplayResponse(ChatGptResponse response)
+        {
+            Console.WriteLine($"\n=== Response (Conversation: {response.ConversationId}) ===\n");
+
+            foreach (var answer in response.Answers)
+            {
+                Console.WriteLine($"Question: {answer.Question}");
+                Console.WriteLine($"\nAnswer: {answer.Answer}");
+                
+                if (answer.Citations.Count > 0)
+                {
+                    Console.WriteLine($"\n--- Sources and Citations ({answer.Citations.Count} document(s)) ---");
+                    
+                    for (int i = 0; i < answer.Citations.Count; i++)
+                    {
+                        var citation = answer.Citations[i];
+                        Console.WriteLine($"\n[{i + 1}] {citation.Title}");
+                        Console.WriteLine($"    Source: {citation.SourcePath}");
+                        Console.WriteLine($"    Type: {citation.FileType}");
+                        Console.WriteLine($"    Relevance Score: {citation.Score:F4}");
+                    }
+                    
+                    Console.WriteLine("\nHow the answer was found:");
+                    Console.WriteLine("The assistant searched the Azure Search Index for relevant documents based on your question,");
+                    Console.WriteLine("retrieved the most relevant content, and used it as context to generate the answer.");
+                    Console.WriteLine("The citations above show which documents were used and their relevance scores.");
+                }
+                else
+                {
+                    Console.WriteLine("\nNo specific documents were found in the search index for this question.");
+                    Console.WriteLine("The answer was generated based on the model's general knowledge.");
+                }
+                
+                Console.WriteLine("\n" + new string('=', 80));
+            }
+        }
+
+        /// <summary>
         /// Displays usage information for the application.
         /// </summary>
         static void ShowUsage()
@@ -365,6 +635,9 @@ namespace AzureSearchIndexToolbox
             Console.WriteLine("  AzureSearchIndexToolbox deploy <json-path> <media-dir> <blob-conn> <search-endpoint> <search-key> [container-name]");
             Console.WriteLine("    Deploys search index and media files to Azure");
             Console.WriteLine();
+            Console.WriteLine("  AzureSearchIndexToolbox chatgpt <config-file-path>");
+            Console.WriteLine("    Runs interactive ChatGPT session with Azure Search Index integration");
+            Console.WriteLine();
             Console.WriteLine("  AzureSearchIndexToolbox help");
             Console.WriteLine("    Shows this help message");
             Console.WriteLine();
@@ -373,6 +646,7 @@ namespace AzureSearchIndexToolbox
             Console.WriteLine("  AzureSearchIndexToolbox extract ./documents ./output");
             Console.WriteLine("  AzureSearchIndexToolbox merge index1.json index2.json merged.json");
             Console.WriteLine("  AzureSearchIndexToolbox deploy ./output/search-index.json ./output/media \"<connection-string>\" \"https://myservice.search.windows.net\" \"<api-key>\"");
+            Console.WriteLine("  AzureSearchIndexToolbox chatgpt ./chatgpt-config.json");
             Console.WriteLine();
             Console.WriteLine("Supported file types:");
             Console.WriteLine("  - PowerPoint presentations (.pptx)");
