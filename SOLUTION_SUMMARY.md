@@ -81,14 +81,35 @@ Features:
 - Document validation
 - Support for merging multiple index files
 
+#### **AzureDeploymentService.cs** - Azure Integration (NEW)
+Key methods:
+- `DeployAsync()`: Complete deployment orchestration
+- `UploadMediaFilesAsync()`: Uploads media files to Azure Blob Storage
+- `UpdateDocumentReferences()`: Replaces local paths with Blob URLs
+- `CreateOrUpdateSearchIndexAsync()`: Creates/updates search index schema
+- `UploadDocumentsToSearchIndexAsync()`: Uploads documents to search index
+- `ValidateConnectionsAsync()`: Validates Azure connections
+
+Features:
+- Uploads all media files (images, audio, video) to Azure Blob Storage
+- Creates public blob container for media files
+- Automatically replaces local file paths with Blob Storage URLs
+- Creates Azure Search Index with appropriate schema
+- Uploads documents in batches to Azure Search
+- Validates Azure connections before deployment
+- Comprehensive error handling and progress reporting
+- Document validation
+- Support for merging multiple index files
+
 ### 4. Program (`Program.cs`)
 
 Main orchestration with CLI:
-- Command-line argument parsing
+- Command-line argument parsing for `extract`, `merge`, and `deploy` commands
 - File and directory processing
 - Progress reporting with detailed console output
 - Error handling and validation
 - User-friendly help system
+- Azure deployment orchestration
 
 ## Key Features
 
@@ -96,9 +117,10 @@ Main orchestration with CLI:
 2. **Comprehensive Extraction**: Text, titles, images, audio, video, metadata
 3. **Batch Processing**: Process entire directories recursively
 4. **Azure Search Compatible**: Outputs JSON in Azure Search Index format
-5. **Modular Design**: Each component is independent and reusable
-6. **Well Documented**: Every method has XML documentation comments
-7. **Error Handling**: Graceful error handling with informative messages
+5. **Azure Deployment**: Direct deployment to Azure Cognitive Search and Blob Storage
+6. **Modular Design**: Each component is independent and reusable
+7. **Well Documented**: Every method has XML documentation comments
+8. **Error Handling**: Graceful error handling with informative messages
 
 ## Usage Examples
 
@@ -116,6 +138,13 @@ dotnet run -- extract ./documents ./output
 ```bash
 dotnet run -- merge index1.json index2.json merged.json
 ```
+
+### Deploy to Azure (NEW)
+```bash
+dotnet run -- deploy ./output/search-index.json ./output/media "<blob-connection-string>" "https://myservice.search.windows.net" "<api-key>"
+```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for comprehensive deployment documentation.
 
 ## Output Format
 
@@ -151,6 +180,8 @@ The tool generates JSON in Azure Search Index format:
 - **iText7 9.3.0**: PDF text and image extraction
 - **Markdig 0.42.0**: Advanced markdown parsing
 - **Newtonsoft.Json 13.0.4**: JSON serialization
+- **Azure.Search.Documents 11.6.0**: Azure Cognitive Search integration (NEW)
+- **Azure.Storage.Blobs 12.22.2**: Azure Blob Storage integration (NEW)
 
 ## Testing
 
@@ -189,13 +220,15 @@ While the current implementation meets all requirements, potential enhancements 
 
 1. DOCX (Word document) extraction
 2. XLSX (Excel spreadsheet) extraction
-3. Async/await for better performance with large files
+3. Async/await for better performance with large files (partially implemented in deployment)
 4. Progress callbacks for long-running operations
-5. Direct Azure Search Index upload
+5. ~~Direct Azure Search Index upload~~ ✅ **IMPLEMENTED**
 6. OCR for scanned PDFs
 7. Video thumbnail generation
 8. Audio transcription
+9. Incremental updates to existing indexes
+10. Scheduled automated deployments
 
 ## Conclusion
 
-This solution provides a robust, well-documented, and production-ready toolbox for extracting data from multiple document formats and creating Azure Search Index files. Every component is designed with clarity and maintainability in mind, making it easy for users to understand and extend.
+This solution provides a robust, well-documented, and production-ready toolbox for extracting data from multiple document formats and creating Azure Search Index files. With the new Azure deployment feature, users can now seamlessly deploy their extracted data to Azure Cognitive Search and Azure Blob Storage with a single command. Every component is designed with clarity and maintainability in mind, making it easy for users to understand and extend.
