@@ -54,6 +54,16 @@ namespace AzureSearchIndexToolbox
                         MergeIndexFiles(inputFiles, mergeOutput);
                         break;
 
+                    case "deploy":
+                        if (args.Length < 6)
+                        {
+                            Console.WriteLine("Error: Please provide all required parameters for deployment.");
+                            ShowUsage();
+                            return;
+                        }
+                        DeployToAzure(args[1], args[2], args[3], args[4], args[5], args.Length > 6 ? args[6] : "searchindex-media");
+                        break;
+
                     case "help":
                     case "--help":
                     case "-h":
@@ -274,6 +284,73 @@ namespace AzureSearchIndexToolbox
         }
 
         /// <summary>
+        /// Deploys the search index and media files to Azure.
+        /// </summary>
+        /// <param name="jsonIndexPath">Path to the search-index.json file</param>
+        /// <param name="mediaDirectory">Path to the media directory</param>
+        /// <param name="blobConnectionString">Azure Blob Storage connection string</param>
+        /// <param name="searchEndpoint">Azure Cognitive Search service endpoint</param>
+        /// <param name="searchApiKey">Azure Cognitive Search admin API key</param>
+        /// <param name="containerName">Name of the blob container (optional, defaults to 'searchindex-media')</param>
+        static void DeployToAzure(string jsonIndexPath, string mediaDirectory, string blobConnectionString, 
+            string searchEndpoint, string searchApiKey, string containerName = "searchindex-media")
+        {
+            try
+            {
+                // Validate input paths
+                if (!File.Exists(jsonIndexPath))
+                {
+                    Console.WriteLine($"Error: JSON index file not found: {jsonIndexPath}");
+                    return;
+                }
+
+                if (!Directory.Exists(mediaDirectory))
+                {
+                    Console.WriteLine($"Error: Media directory not found: {mediaDirectory}");
+                    return;
+                }
+
+                // Prompt for index name
+                Console.Write("Enter the Azure Search Index name to create/update: ");
+                string? indexName = Console.ReadLine();
+                
+                if (string.IsNullOrWhiteSpace(indexName))
+                {
+                    Console.WriteLine("Error: Index name is required.");
+                    return;
+                }
+
+                // Create deployment service
+                var deploymentService = new AzureDeploymentService(
+                    blobConnectionString,
+                    searchEndpoint,
+                    searchApiKey,
+                    containerName
+                );
+
+                // Validate connections
+                Console.WriteLine("Validating Azure connections...");
+                var isValid = deploymentService.ValidateConnectionsAsync().GetAwaiter().GetResult();
+                
+                if (!isValid)
+                {
+                    Console.WriteLine("Error: Azure connection validation failed. Please check your credentials.");
+                    return;
+                }
+
+                Console.WriteLine();
+
+                // Deploy to Azure
+                deploymentService.DeployAsync(jsonIndexPath, mediaDirectory, indexName).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Deployment failed: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
         /// Displays usage information for the application.
         /// </summary>
         static void ShowUsage()
@@ -285,6 +362,9 @@ namespace AzureSearchIndexToolbox
             Console.WriteLine("  AzureSearchIndexToolbox merge <file1> <file2> ... <output-file>");
             Console.WriteLine("    Merges multiple search index JSON files into one");
             Console.WriteLine();
+            Console.WriteLine("  AzureSearchIndexToolbox deploy <json-path> <media-dir> <blob-conn> <search-endpoint> <search-key> [container-name]");
+            Console.WriteLine("    Deploys search index and media files to Azure");
+            Console.WriteLine();
             Console.WriteLine("  AzureSearchIndexToolbox help");
             Console.WriteLine("    Shows this help message");
             Console.WriteLine();
@@ -292,6 +372,7 @@ namespace AzureSearchIndexToolbox
             Console.WriteLine("  AzureSearchIndexToolbox extract presentation.pptx");
             Console.WriteLine("  AzureSearchIndexToolbox extract ./documents ./output");
             Console.WriteLine("  AzureSearchIndexToolbox merge index1.json index2.json merged.json");
+            Console.WriteLine("  AzureSearchIndexToolbox deploy ./output/search-index.json ./output/media \"<connection-string>\" \"https://myservice.search.windows.net\" \"<api-key>\"");
             Console.WriteLine();
             Console.WriteLine("Supported file types:");
             Console.WriteLine("  - PowerPoint presentations (.pptx)");

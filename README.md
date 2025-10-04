@@ -10,6 +10,7 @@ A C# console application that extracts data from PowerPoint (PPTX), PDF, and Mar
 - **Azure Search Index Format**: Outputs data in JSON format compatible with Azure Cognitive Search
 - **Batch Processing**: Process individual files or entire directories
 - **File Merging**: Merge multiple search index JSON files into a single file
+- **Azure Deployment**: Deploy search indexes and media files directly to Azure Cognitive Search and Azure Blob Storage
 
 ## Quick Start
 
@@ -32,6 +33,15 @@ dotnet run -- extract ./documents ./output
 # Get help
 dotnet run -- help
 ```
+
+### Deploy to Azure
+
+```bash
+# Deploy extracted data to Azure
+dotnet run -- deploy ./output/search-index.json ./output/media "<blob-connection-string>" "https://myservice.search.windows.net" "<search-api-key>"
+```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 ## Documentation
 
@@ -56,6 +66,8 @@ Every component is fully commented to help users understand how it works.
   - iText7
   - Markdig
   - Newtonsoft.Json
+  - Azure.Search.Documents (for deployment)
+  - Azure.Storage.Blobs (for deployment)
 
 ## Output Format
 
