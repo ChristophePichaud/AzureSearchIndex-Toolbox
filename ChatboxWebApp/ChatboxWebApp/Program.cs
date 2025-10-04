@@ -36,6 +36,8 @@ if (chatConfig == null)
 // Register ChatGptService as Singleton to maintain conversation state
 builder.Services.AddSingleton(chatConfig);
 builder.Services.AddSingleton<ChatGptService>();
+builder.Services.AddScoped<HttpClient>();
+
 
 // Add CORS for development
 builder.Services.AddCors(options =>
