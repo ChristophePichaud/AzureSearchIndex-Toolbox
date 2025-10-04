@@ -416,3 +416,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# ChatGPT configuration files with credentials
+chatgpt-config.json
+**/chatgpt-config.json

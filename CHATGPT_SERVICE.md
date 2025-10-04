@@ -16,7 +16,13 @@ The ChatGPT service provides:
 
 ### 1. Create Configuration File
 
-Create a `chatgpt-config.json` file with your Azure credentials:
+Create a `chatgpt-config.json` file based on the provided template (`chatgpt-config.template.json`):
+
+```bash
+cp chatgpt-config.template.json chatgpt-config.json
+```
+
+Then edit `chatgpt-config.json` with your Azure credentials:
 
 ```json
 {
