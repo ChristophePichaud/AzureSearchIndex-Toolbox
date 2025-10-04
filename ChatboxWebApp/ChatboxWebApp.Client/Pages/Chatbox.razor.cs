@@ -31,7 +31,7 @@ namespace ChatboxWebApp.Client.Pages
             try
             {
                 HttpClient = new HttpClient();
-                HttpClient.BaseAddress = new Uri("http://localhost:5077/");
+                HttpClient.BaseAddress = new Uri("https://chatgptpic.azurewebsites.net/");
                 var response = await HttpClient.GetFromJsonAsync<ConversationInfoResponse>("/api/chat/conversation-info");
                 if (response != null)
                 {
@@ -61,6 +61,8 @@ namespace ChatboxWebApp.Client.Pages
                 currentQuestion = "";
 
                 var request = new { Question = userQuestion };
+                HttpClient = new HttpClient();
+                HttpClient.BaseAddress = new Uri("https://chatgptpic.azurewebsites.net/");
                 var response = await HttpClient.PostAsJsonAsync("/api/chat/ask", request);
 
                 if (response.IsSuccessStatusCode)
@@ -114,6 +116,8 @@ namespace ChatboxWebApp.Client.Pages
                 multipleQuestions = new List<string> { "" };
 
                 var request = new { Questions = validQuestions };
+                HttpClient = new HttpClient();
+                HttpClient.BaseAddress = new Uri("https://chatgptpic.azurewebsites.net/");
                 var response = await HttpClient.PostAsJsonAsync("/api/chat/ask-multiple", request);
 
                 if (response.IsSuccessStatusCode)
@@ -154,6 +158,8 @@ namespace ChatboxWebApp.Client.Pages
         {
             try
             {
+                HttpClient = new HttpClient();
+                HttpClient.BaseAddress = new Uri("https://chatgptpic.azurewebsites.net/");
                 var response = await HttpClient.PostAsync("/api/chat/new-conversation", null);
                 if (response.IsSuccessStatusCode)
                 {
@@ -171,6 +177,8 @@ namespace ChatboxWebApp.Client.Pages
         {
             try
             {
+                HttpClient = new HttpClient();
+                HttpClient.BaseAddress = new Uri("https://chatgptpic.azurewebsites.net/");
                 var response = await HttpClient.PostAsync("/api/chat/reset", null);
                 if (response.IsSuccessStatusCode)
                 {

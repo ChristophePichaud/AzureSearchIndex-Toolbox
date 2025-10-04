@@ -18,7 +18,7 @@ builder.Services.AddScoped<HttpClient>(sp =>
     var handler = sp.GetRequiredService<CustomAuthorizationMessageHandler>();
     return new HttpClient(handler)
     {
-        BaseAddress = new Uri("http://localhost:5077/") // Adresse de l'API
+        BaseAddress = new Uri("https://chatgptpic.azurewebsites.net/") // Adresse de l'API
     };
 });
 
